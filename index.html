@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Dashboard</title>
+
+    <!-- Font Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script>
+        // TUA CONFIGURAZIONE FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyDySIO2o-evuwuoDXT8pIW8sjHdrCwsiys",
+            authDomain: "dashboard-amministratori.firebaseapp.com",
+            projectId: "dashboard-amministratori",
+            storageBucket: "dashboard-amministratori.firebasestorage.app",
+            messagingSenderId: "426317540614",
+            appId: "1:426317540614:web:413613dd8e46a5ac10c287"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        window.firebaseAuth = firebase.auth();
+        window.firebaseDb = firebase.firestore();
+
+        console.log('Firebase initialized successfully');
+    </script>
+
+    <style>
+        /* --- STILI CSS (con correzione per l'icona occhio) --- */
+        :root {
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        :root,
+        :root[data-theme="dark"] {
+            --bg-color: #121212;
+            --surface-color: #1c1c1c;
+            --surface-color-light: #2a2a2a;
+            --primary-text: #FFFFFF;
+            --secondary-text: #b3b3b3;
+            --accent-color: #1DB954;
+            --accent-color-dark: #19a34a;
+            --danger: #e74c3c;
+            --warning: #f1c40f;
+        }
+
+        :root[data-theme="light"] {
+            --bg-color: #ffffff;
+            --surface-color: #e9ecef;
+            --surface-color-light: #dee2e6;
+            --primary-text: #212529;
+            --secondary-text: #6c757d;
+            --accent-color: #1DB954;
+            --accent-color-dark: #19a34a;
+            --danger: #dc3545;
+            --warning: #ffc107;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        html {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-text);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+        }
+
+        body::-webkit-scrollbar {
+            display: none;
+        }
+
+        body {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        #app {
+            padding: 100px 1rem 2rem 1rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1rem;
+            background-color: var(--bg-color);
+            border-bottom: 1px solid var(--surface-color);
+            z-index: 1000;
+        }
+
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .card {
+            background: var(--surface-color);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.8rem 1.5rem;
+            border-radius: var(--radius-md);
+            border: none;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn.w-full {
+            width: 100%;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: var(--accent-color-dark);
+        }
+
+        .btn-secondary {
+            background-color: var(--surface-color-light);
+            color: var(--primary-text);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-icon {
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 0.5rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface-color-light);
+            color: var(--primary-text);
+        }
+
+        .btn-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .btn-icon:hover {
+            background-color: var(--accent-color);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--secondary-text);
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            background: var(--surface-color-light);
+            border: 1px solid var(--surface-color-light);
+            border-radius: var(--radius-sm);
+            padding: 0.8rem 1rem;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            color: var(--primary-text);
+        }
+
+        .form-input::placeholder {
+            color: var(--secondary-text);
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .form-input:invalid {
+            border-color: var(--danger);
+        }
+
+        .validation-message {
+            color: var(--danger);
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        .form-input:invalid+.validation-message {
+            display: block;
+        }
+
+        /* CORREZIONE #1: Stile per il contenitore dell'input password */
+        .password-toggle-container {
+            position: relative;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--secondary-text);
+            padding: 0.5rem;
+        }
+
+        .message-box {
+            padding: 1rem;
+            border-radius: var(--radius-sm);
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        .message-box.success {
+            background-color: rgba(29, 185, 84, 0.2);
+            color: var(--accent-color);
+        }
+
+        .message-box.error {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: var(--danger);
+        }
+
+        .list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background-color: var(--surface-color-light);
+            border-radius: var(--radius-md);
+        }
+
+        .list-item-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-sm);
+            background-color: var(--surface-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .list-item-icon svg {
+            width: 24px;
+            height: 24px;
+            color: var(--accent-color);
+        }
+
+        .list-item-content {
+            flex-grow: 1;
+            min-width: 0;
+        }
+
+        .list-item-content .title {
+            font-weight: 600;
+            color: var(--primary-text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .list-item-content .subtitle {
+            font-size: 0.85rem;
+            color: var(--secondary-text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .list-item-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 1rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--surface-color);
+            padding: 1.5rem;
+            border-radius: var(--radius-md);
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.visible .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            color: var(--secondary-text);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .grid {
+            display: grid;
+        }
+
+        .grid-cols-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .grid-cols-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .gap-4 {
+            gap: 1rem;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        .justify-end {
+            justify-content: flex-end;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            #app {
+                padding: 80px 0.5rem 1rem 0.5rem;
+            }
+
+            .page-header {
+                padding: 0.75rem;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .grid-cols-2,
+            .grid-cols-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .list-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .list-item-actions {
+                margin-top: 1rem;
+                width: 100%;
+            }
+
+            .list-item-actions .btn-icon {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="app">
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh;">
+            <div
+                style="width: 40px; height: 40px; border: 4px solid #2a2a2a; border-top: 4px solid #1DB954; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 1rem;">
+            </div>
+            <p style="color: #b3b3b3;">Inizializzazione...</p>
+        </div>
+        <style>
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+        </style>
+    </div>
+
+    <div id="modal-container" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title" class="modal-title"></h3>
+                <button id="modal-close-btn" class="modal-close-btn">&times;</button>
+            </div>
+            <div id="modal-body" class="modal-body"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        /**
+         * =================================================================
+         * MODULO DI STATO E ROUTING
+         * =================================================================
+         */
+        const state = {
+            currentUser: null,
+            condos: [],
+            filters: { search: '', comune: '', scale: '' },
+            editingCondoId: null
+        };
+
+        const router = () => {
+            const hash = window.location.hash || '#login';
+            if (state.currentUser && (hash === '#login' || hash === '#register')) {
+                return navigateTo('#dashboard');
+            }
+            if (!state.currentUser && hash !== '#login' && hash !== '#register') {
+                return navigateTo('#login');
+            }
+            renderApp(hash);
+        };
+
+        const navigateTo = (hash) => { window.location.hash = hash; };
+        window.addEventListener('hashchange', router);
+
+        /**
+         * =================================================================
+         * MODULO DATABASE (Firestore)
+         * =================================================================
+         */
+        const db = {
+            createUserProfile: async (uid, userData) => {
+                return await firebaseDb.collection('users').doc(uid).set(userData);
+            },
+            getCondos: async (userId) => {
+                const snapshot = await firebaseDb.collection('condos').where('userId', '==', userId).get();
+                return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            },
+            addCondo: async (userId, condoData) => {
+                return await firebaseDb.collection('condos').add({ ...condoData, userId });
+            },
+            updateCondo: async (condoId, condoData) => {
+                return await firebaseDb.collection('condos').doc(condoId).update(condoData);
+            },
+            deleteCondo: async (condoId) => {
+                return await firebaseDb.collection('condos').doc(condoId).delete();
+            }
+        };
+
+        /**
+         * =================================================================
+         * MODULO DI AUTENTICAZIONE (Firebase Auth)
+         * =================================================================
+         */
+        const auth = {
+            register: async (email, password) => {
+                const userCredential = await firebaseAuth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                await db.createUserProfile(user.uid, {
+                    email: user.email,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                return userCredential;
+            },
+            login: async (email, password) => {
+                return await firebaseAuth.signInWithEmailAndPassword(email, password);
+            },
+            logout: async () => {
+                await firebaseAuth.signOut();
+            },
+            resetPassword: async (email) => {
+                return await firebaseAuth.sendPasswordResetEmail(email);
+            }
+        };
+
+        /**
+         * =================================================================
+         * INIZIALIZZAZIONE APP
+         * =================================================================
+         */
+        const initializeApp = () => {
+            firebaseAuth.onAuthStateChanged(async user => {
+                if (user) {
+                    state.currentUser = { email: user.email, uid: user.uid };
+                    state.condos = await db.getCondos(user.uid);
+                } else {
+                    state.currentUser = null;
+                    state.condos = [];
+                }
+                router();
+            });
+        };
+        window.addEventListener('DOMContentLoaded', initializeApp);
+
+        /**
+         * =================================================================
+         * MODULO COMPONENTI UI RIUTILIZZABILI
+         * =================================================================
+         */
+        const UIRenderers = {
+            header: (title) => `<header class="page-header"><h1 class="page-title">${title}</h1><div class="header-actions"><button id="theme-toggle-btn" class="btn-icon" title="Cambia tema"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 01.818.162z"/></svg></button><button id="logout-btn" class="btn btn-secondary">Esci</button></div></header>`,
+            eyeIcon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>`,
+            eyeSlashIcon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-4 .68l1.64 1.64C9.74 7.13 10.82 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L21.73 23 20.46 21.73 4.54 5.81 3.27 4.54 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>`,
+            // CORREZIONE #2: Aggiornato il testo in "Scala"
+            condoListItem: (condo) => `<div class="list-item" data-id="${condo.id}"><div class="list-item-icon"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7v13h20V7L12 2z"/></svg></div><div class="list-item-content"><div class="title">${condo.nome}</div><div class="subtitle">${condo.indirizzo}, ${condo.comune} - Scala: ${condo.scale}</div></div><div class="list-item-actions"><a href="${condo.url}" target="_blank" class="btn-icon" title="Apri link"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg></a><button class="btn-icon btn-edit" title="Modifica"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button><button class="btn-icon btn-delete" title="Elimina" style="background-color: var(--danger); color: white;"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button></div></div>`,
+            emptyState: () => `<div class="card" style="text-align: center; padding: 3rem 1.5rem;"><svg fill="currentColor" viewBox="0 0 24 24" style="width: 64px; height: 64px; color: var(--secondary-text); margin: 0 auto 1rem;"><path d="M12 2L2 7v13h20V7L12 2zM8 18H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V8h2v2zm10 8h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8V8h8v2z"/></svg><p style="color: var(--secondary-text);">Nessun condominio trovato. Inizia aggiungendone uno nuovo.</p></div>`
+        };
+
+        /**
+         * =================================================================
+         * PAGINE E LOGICA DI RENDERING
+         * =================================================================
+         */
+
+        const renderLoginPage = (isRegistering = false) => `
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:1rem;">
+                <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--accent-color);">Dashboard</h1>
+                <h2 id="auth-title" style="font-size: 1.5rem; font-weight: 600; margin-bottom: 2rem;">${isRegistering ? 'Registrati' : 'Accedi'}</h2>
+                <div id="message-box" class="message-box w-full" style="max-width:400px;"></div>
+                <form id="auth-form" style="width: 100%; max-width:400px;">
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email</label>
+                        <input id="email" type="email" required placeholder="la-tua-email@esempio.com" class="form-input">
+                    </div>
+                    
+                    <!-- CORREZIONE #1: Struttura HTML per il campo password aggiornata -->
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="password-toggle-container">
+                            <input id="password" type="password" required placeholder="••••••••" class="form-input" minlength="6">
+                            <button type="button" class="password-toggle-btn">${UIRenderers.eyeIcon}</button>
+                        </div>
+                    </div>
+                    
+                    <div id="register-fields" class="${isRegistering ? '' : 'hidden'}">
+                        <div class="form-group">
+                            <label for="confirm-password" class="form-label">Conferma Password</label>
+                            <div class="password-toggle-container">
+                                <input id="confirm-password" type="password" placeholder="••••••••" class="form-input" minlength="6">
+                                <button type="button" class="password-toggle-btn">${UIRenderers.eyeIcon}</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" id="auth-submit" class="btn btn-primary w-full">${isRegistering ? 'Registrati' : 'Accedi'}</button>
+                </form>
+                <div style="display: flex; width: 100%; max-width:400px; justify-content: space-between; margin-top: 1rem;">
+                    <button type="button" id="toggle-auth" style="background:none; border:none; color:var(--secondary-text); cursor:pointer;">${isRegistering ? 'Hai già un account? Accedi' : ' Registrati'}</button>
+                    <button type="button" id="forgot-password" class="${isRegistering ? 'hidden' : ''}" style="background:none; border:none; color:var(--secondary-text); cursor:pointer;">Password dimenticata?</button>
+                </div>
+            </div>
+        `;
+
+        const renderDashboardPage = () => {
+            const condos = state.condos;
+            const filters = state.filters;
+            const filteredCondos = condos.filter(condo => (condo.nome.toLowerCase().includes(filters.search) || condo.indirizzo.toLowerCase().includes(filters.search) || condo.comune.toLowerCase().includes(filters.search)) && (!filters.comune || condo.comune === filters.comune) && (!filters.scale || condo.scale.toString() === filters.scale));
+            const uniqueComuni = [...new Set(condos.map(c => c.comune))];
+            const uniqueScale = [...new Set(condos.map(c => c.scale))];
+
+            return `
+                ${UIRenderers.header('Dashboard Condomini')}
+                <main>
+                    <div class="card">
+                        <div class="card-title">Filtra Condomini</div>
+                        <div class="grid grid-cols-3 gap-4" id="filters-container">
+                            <div class="form-group">
+                                <label for="search-filter" class="form-label">Cerca</label>
+                                <input type="search" id="search-filter" class="form-input" placeholder="Nome, indirizzo..." value="${filters.search}">
+                            </div>
+                            <div class="form-group">
+                                <label for="comune-filter" class="form-label">Comune</label>
+                                <select id="comune-filter" class="form-select"><option value="">Tutti</option>${uniqueComuni.map(c => `<option value="${c}" ${filters.comune === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
+                            </div>
+                            <div class="form-group">
+                                <!-- CORREZIONE #2: Aggiornato il testo in "Numero Scala" -->
+                                <label for="scale-filter" class="form-label">Numero Scala</label>
+                                <select id="scale-filter" class="form-select"><option value="">Tutte</option>${uniqueScale.map(s => `<option value="${s}" ${filters.scale === s.toString() ? 'selected' : ''}>${s}</option>`).join('')}</select>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 1rem; margin-top: 1rem; justify-content: flex-end;">
+                            <button id="reset-filters-btn" class="btn btn-secondary">Reset Filtri</button>
+                            <button id="search-btn" class="btn btn-primary">Cerca</button>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2 class="section-title" style="margin: 0; font-size: 1.2rem; font-weight: 700;">Elenco Condomini (${filteredCondos.length})</h2>
+                        <button id="add-condo-btn" class="btn btn-primary">Aggiungi Condominio</button>
+                    </div>
+                    <div id="condo-list" class="list-container">${filteredCondos.length > 0 ? filteredCondos.map(UIRenderers.condoListItem).join('') : UIRenderers.emptyState()}</div>
+                </main>
+            `;
+        };
+
+        const renderCondoFormPage = () => {
+            const condo = state.editingCondoId ? state.condos.find(c => c.id === state.editingCondoId) : null;
+            const isEditing = !!condo;
+
+            return `
+                ${UIRenderers.header(isEditing ? 'Modifica Condominio' : 'Nuovo Condominio')}
+                <main>
+                    <div class="card">
+                        <div class="card-title">${isEditing ? `Modifica: ${condo.nome}` : 'Dettagli Nuovo Condominio'}</div>
+                        <div id="message-box" class="message-box"></div>
+                        <form id="condo-form">
+                            <input type="hidden" id="condo-id" value="${condo?.id || ''}">
+                            <div class="form-group">
+                                <label for="condo-nome" class="form-label">Nome Condominio</label>
+                                <input id="condo-nome" type="text" class="form-input" required value="${condo?.nome || ''}">
+                            </div>
+                             <div class="grid grid-cols-2 gap-4">
+                                <div class="form-group">
+                                    <label for="condo-comune" class="form-label">Comune</label>
+                                    <input id="condo-comune" type="text" class="form-input" required value="${condo?.comune || ''}">
+                                </div>
+                                <div class="form-group">
+                                    <label for="condo-indirizzo" class="form-label">Indirizzo</label>
+                                    <input id="condo-indirizzo" type="text" class="form-input" required value="${condo?.indirizzo || ''}">
+                                </div>
+                            </div>
+                             <div class="form-group">
+                                <!-- CORREZIONE #2: Aggiornato il testo in "Numero Scala" -->
+                                <label for="condo-scale" class="form-label">Numero Scala</label>
+                                <input id="condo-scale" type="number" class="form-input" required min="1" value="${condo?.scale || '1'}">
+                            </div>
+                             <div class="form-group">
+                                <label for="condo-url" class="form-label">URL gestionale (es. MIO CONDOMINIO)</label>
+                                <input id="condo-url" type="url" class="form-input" required placeholder="https://" value="${condo?.url || ''}">
+                                <div class="validation-message">Inserisci un URL valido.</div>
+                            </div>
+                            <div class="flex justify-end gap-4" style="margin-top: 2rem;">
+                                <button type="button" id="cancel-btn" class="btn btn-secondary">Annulla</button>
+                                <button type="submit" class="btn btn-primary">${isEditing ? 'Salva Modifiche' : 'Crea Condominio'}</button>
+                            </div>
+                        </form>
+                    </div>
+                </main>
+            `;
+        };
+
+        /**
+         * =================================================================
+         * GESTORI DI EVENTI
+         * =================================================================
+         */
+
+        const setupLoginHandlers = () => {
+            const form = document.getElementById('auth-form');
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const submitBtn = form.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                const isRegistering = !!document.getElementById('register-fields').offsetParent;
+                const email = form.email.value;
+                const password = form.password.value;
+                try {
+                    if (isRegistering) {
+                        const confirmPassword = form['confirm-password'].value;
+                        if (password !== confirmPassword) throw new Error('Le password non coincidono.');
+                        await auth.register(email, password);
+                        showMessage('success', 'Registrazione completata! Ora puoi accedere.');
+                        navigateTo('#login');
+                    } else {
+                        await auth.login(email, password);
+                    }
+                } catch (error) {
+                    showMessage('error', getFirebaseErrorMessage(error));
+                } finally {
+                    submitBtn.disabled = false;
+                }
+            });
+            document.getElementById('toggle-auth').addEventListener('click', () => {
+                const isRegistering = !!document.getElementById('register-fields').offsetParent;
+                navigateTo(isRegistering ? '#login' : '#register');
+            });
+            document.getElementById('forgot-password').addEventListener('click', () => {
+                showResetPasswordModal();
+            });
+            document.querySelectorAll('.password-toggle-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const input = btn.previousElementSibling;
+                    const isPassword = input.type === 'password';
+                    input.type = isPassword ? 'text' : 'password';
+                    btn.innerHTML = isPassword ? UIRenderers.eyeSlashIcon : UIRenderers.eyeIcon;
+                });
+            });
+        };
+
+        const setupDashboardHandlers = () => {
+            document.getElementById('logout-btn').addEventListener('click', auth.logout);
+            document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
+            document.getElementById('add-condo-btn').addEventListener('click', () => {
+                state.editingCondoId = null;
+                navigateTo('#condo-form');
+            });
+            // Gestione pulsante Cerca
+            document.getElementById('search-btn').addEventListener('click', () => {
+                state.filters.search = document.getElementById('search-filter').value.toLowerCase();
+                state.filters.comune = document.getElementById('comune-filter').value;
+                state.filters.scale = document.getElementById('scale-filter').value;
+                updateCondoList();
+            });
+
+            // Gestione pulsante Reset
+            document.getElementById('reset-filters-btn').addEventListener('click', () => {
+                state.filters.search = '';
+                state.filters.comune = '';
+                state.filters.scale = '';
+                document.getElementById('search-filter').value = '';
+                document.getElementById('comune-filter').value = '';
+                document.getElementById('scale-filter').value = '';
+                updateCondoList();
+            });
+
+            // Permetti ricerca con tasto Invio nel campo di ricerca
+            document.getElementById('search-filter').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    document.getElementById('search-btn').click();
+                }
+            });
+            setupCondoListHandlers();
+        };
+
+        const setupCondoFormHandlers = () => {
+            document.getElementById('logout-btn').addEventListener('click', auth.logout);
+            document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
+            document.getElementById('cancel-btn').addEventListener('click', () => navigateTo('#dashboard'));
+            const form = document.getElementById('condo-form');
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const condoData = {
+                    nome: form['condo-nome'].value,
+                    comune: form['condo-comune'].value,
+                    indirizzo: form['condo-indirizzo'].value,
+                    scale: parseInt(form['condo-scale'].value, 10),
+                    url: form['condo-url'].value,
+                };
+                const condoId = form['condo-id'].value;
+                const isEditing = !!condoId;
+                try {
+                    if (isEditing) {
+                        await db.updateCondo(condoId, condoData);
+                        state.condos = state.condos.map(c => c.id === condoId ? { id: condoId, ...condoData } : c);
+                    } else {
+                        // CORREZIONE #4: La logica qui aggiorna lo stato locale prima di navigare
+                        const newDoc = await db.addCondo(state.currentUser.uid, condoData);
+                        state.condos.push({ id: newDoc.id, ...condoData });
+                    }
+                    navigateTo('#dashboard');
+                } catch (error) {
+                    showMessage('error', "Si è verificato un errore durante il salvataggio.");
+                }
+            });
+        };
+
+        /**
+         * =================================================================
+         * FUNZIONI DI UTILITÀ
+         * =================================================================
+         */
+        const showMessage = (type, text) => { const box = document.getElementById('message-box'); if (!box) return; box.className = `message-box ${type}`; box.textContent = text; box.style.display = 'block'; setTimeout(() => { if (box) box.style.display = 'none' }, 5000); };
+        const showModal = (title, body) => { document.getElementById('modal-title').textContent = title; document.getElementById('modal-body').innerHTML = body; document.getElementById('modal-container').classList.add('visible'); };
+        const hideModal = () => { document.getElementById('modal-container').classList.remove('visible'); };
+        const showResetPasswordModal = () => { showModal('Recupera Password', `<div id="reset-message-box" class="message-box"></div><p style="color: var(--secondary-text); margin-bottom: 1rem;">Inserisci l'email associata al tuo account. Ti invieremo un link per reimpostare la password.</p><form id="reset-password-form"><div class="form-group"><label for="reset-email" class="form-label">Email</label><input id="reset-email" type="email" class="form-input" required></div><div class="flex justify-end"><button type="submit" class="btn btn-primary">Invia Email</button></div></form>`); document.getElementById('reset-password-form').addEventListener('submit', async (e) => { e.preventDefault(); const form = e.target; const email = form['reset-email'].value; const messageBox = document.getElementById('reset-message-box'); const submitBtn = form.querySelector('button[type="submit"]'); submitBtn.disabled = true; submitBtn.textContent = 'Invio...'; try { await auth.resetPassword(email); messageBox.className = 'message-box success'; messageBox.textContent = 'Email di recupero inviata! Controlla la tua casella di posta.'; messageBox.style.display = 'block'; setTimeout(hideModal, 3000); } catch (error) { messageBox.className = 'message-box error'; messageBox.textContent = getFirebaseErrorMessage(error); messageBox.style.display = 'block'; } finally { submitBtn.disabled = false; submitBtn.textContent = 'Invia Email'; } }); };
+        const getFirebaseErrorMessage = (error) => { switch (error.code) { case 'auth/invalid-email': return 'Formato email non valido.'; case 'auth/user-not-found': return 'Nessun utente trovato con questa email.'; case 'auth/wrong-password': return 'Password errata.'; case 'auth/email-already-in-use': return 'Questa email è già stata registrata.'; case 'auth/weak-password': return 'La password deve essere di almeno 6 caratteri.'; default: return 'Si è verificato un errore. Riprova.'; } };
+        const toggleTheme = () => { const html = document.documentElement; const currentTheme = html.getAttribute('data-theme'); const newTheme = currentTheme === 'dark' ? 'light' : 'dark'; html.setAttribute('data-theme', newTheme); localStorage.setItem('theme-preference', newTheme); };
+        const initializeTheme = () => { const savedTheme = localStorage.getItem('theme-preference') || 'dark'; document.documentElement.setAttribute('data-theme', savedTheme); };
+        const updateCondoList = () => {
+            const condos = state.condos;
+            const filters = state.filters;
+            const filteredCondos = condos.filter(condo => (condo.nome.toLowerCase().includes(filters.search) || condo.indirizzo.toLowerCase().includes(filters.search) || condo.comune.toLowerCase().includes(filters.search)) && (!filters.comune || condo.comune === filters.comune) && (!filters.scale || condo.scale.toString() === filters.scale));
+            const condoListContainer = document.getElementById('condo-list');
+            const countElement = document.querySelector('.section-title');
+            if (condoListContainer) {
+                condoListContainer.innerHTML = filteredCondos.length > 0 ? filteredCondos.map(UIRenderers.condoListItem).join('') : UIRenderers.emptyState();
+                setupCondoListHandlers();
+            }
+            if (countElement) {
+                countElement.textContent = `Elenco Condomini (${filteredCondos.length})`;
+            }
+        };
+        const setupCondoListHandlers = () => {
+            const condoListElement = document.getElementById('condo-list');
+            if (!condoListElement) return;
+            condoListElement.addEventListener('click', (e) => {
+                const target = e.target.closest('.btn-edit, .btn-delete');
+                if (!target) return;
+                const condoItem = target.closest('.list-item');
+                const condoId = condoItem.dataset.id;
+                if (target.classList.contains('btn-edit')) {
+                    state.editingCondoId = condoId;
+                    navigateTo('#condo-form');
+                } else if (target.classList.contains('btn-delete')) {
+                    const condo = state.condos.find(c => c.id === condoId);
+                    showModal('Conferma Eliminazione', `<p>Sei sicuro di voler eliminare il condominio "<strong>${condo.nome}</strong>"? L'azione è irreversibile.</p><div class="flex justify-end gap-4" style="margin-top: 1.5rem;"><button class="btn btn-secondary" onclick="hideModal()">Annulla</button><button id="confirm-delete-btn" class="btn btn-danger">Elimina</button></div>`);
+                    document.getElementById('confirm-delete-btn').onclick = async () => {
+                        await db.deleteCondo(condoId);
+                        state.condos = state.condos.filter(c => c.id !== condoId);
+                        hideModal();
+                        updateCondoList();
+                    };
+                }
+            });
+        };
+        initializeTheme();
+        document.getElementById('modal-close-btn').addEventListener('click', hideModal);
+        document.getElementById('modal-container').addEventListener('click', (e) => { if (e.target === e.currentTarget) hideModal(); });
+
+        /**
+         * =================================================================
+         * RENDERER PRINCIPALE DELL'APP
+         * =================================================================
+         */
+        const renderApp = (hash) => { const appContainer = document.getElementById('app'); if (!appContainer) return; switch (hash) { case '#login': appContainer.innerHTML = renderLoginPage(false); setupLoginHandlers(); break; case '#register': appContainer.innerHTML = renderLoginPage(true); setupLoginHandlers(); break; case '#dashboard': appContainer.innerHTML = renderDashboardPage(); setupDashboardHandlers(); break; case '#condo-form': appContainer.innerHTML = renderCondoFormPage(); setupCondoFormHandlers(); break; default: navigateTo('#login'); } };
+        window.hideModal = hideModal;
+    </script>
+</body>
+
+</html>
