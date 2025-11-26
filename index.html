@@ -100,7 +100,7 @@
         }
 
         #app {
-            padding: 100px 1rem 2rem 1rem;
+            padding: 100px 1rem 80px 1rem;
             max-width: 900px;
             margin: 0 auto;
         }
@@ -441,9 +441,179 @@
             display: none !important;
         }
 
+        main {
+            padding-bottom: 2rem;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--surface-color);
+            border-top: 1px solid var(--surface-color-light);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0.75rem 0;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem 1.5rem;
+            cursor: pointer;
+            color: var(--secondary-text);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-radius: var(--radius-sm);
+        }
+
+        .nav-item:hover {
+            color: var(--accent-color);
+            background-color: var(--surface-color-light);
+        }
+
+        .nav-item.active {
+            color: var(--accent-color);
+        }
+
+        .nav-item svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .nav-item span {
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        /* Profile Page Styles */
+        .profile-card {
+            background: var(--surface-color);
+            border-radius: var(--radius-md);
+            padding: 2rem 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-color), var(--accent-color-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .profile-email {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-text);
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-info {
+            font-size: 0.9rem;
+            color: var(--secondary-text);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--surface-color);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--secondary-text);
+        }
+
+        /* Dashboard Action Boxes */
+        .dashboard-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .action-box {
+            background: var(--surface-color);
+            border: none;
+            border-radius: var(--radius-lg);
+            padding: 2rem 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .action-box:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .action-box:active {
+            transform: translateY(-2px);
+        }
+
+        .action-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-icon svg {
+            width: 40px;
+            height: 40px;
+        }
+
+        .action-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary-text);
+            margin: 0;
+        }
+
+        .action-description {
+            font-size: 0.9rem;
+            color: var(--secondary-text);
+            margin: 0;
+        }
+
         @media (max-width: 768px) {
             #app {
-                padding: 80px 0.5rem 1rem 0.5rem;
+                padding: 80px 0.5rem 80px 0.5rem;
             }
 
             .page-header {
@@ -523,12 +693,19 @@
 
         const router = () => {
             const hash = window.location.hash || '#login';
+
+            // Allow navigation to directory and condo-form even when logged in
             if (state.currentUser && (hash === '#login' || hash === '#register')) {
-                return navigateTo('#dashboard');
+                window.location.hash = '#dashboard';
+                return;
             }
+
+            // Redirect to login if not authenticated and trying to access protected routes
             if (!state.currentUser && hash !== '#login' && hash !== '#register') {
-                return navigateTo('#login');
+                window.location.hash = '#login';
+                return;
             }
+
             renderApp(hash);
         };
 
@@ -543,6 +720,9 @@
         const db = {
             createUserProfile: async (uid, userData) => {
                 return await firebaseDb.collection('users').doc(uid).set(userData);
+            },
+            updateUserProfile: async (uid, userData) => {
+                return await firebaseDb.collection('users').doc(uid).update(userData);
             },
             getCondos: async (userId) => {
                 const snapshot = await firebaseDb.collection('condos').where('userId', '==', userId).get();
@@ -582,6 +762,22 @@
             },
             resetPassword: async (email) => {
                 return await firebaseAuth.sendPasswordResetEmail(email);
+            },
+            reauthenticate: async (password) => {
+                const user = firebaseAuth.currentUser;
+                const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
+                return await user.reauthenticateWithCredential(credential);
+            },
+            updateEmail: async (newEmail, currentPassword) => {
+                await auth.reauthenticate(currentPassword);
+                const user = firebaseAuth.currentUser;
+                await user.updateEmail(newEmail);
+                await db.updateUserProfile(user.uid, { email: newEmail });
+            },
+            updatePassword: async (currentPassword, newPassword) => {
+                await auth.reauthenticate(currentPassword);
+                const user = firebaseAuth.currentUser;
+                await user.updatePassword(newPassword);
             }
         };
 
@@ -611,6 +807,7 @@
          */
         const UIRenderers = {
             header: (title) => `<header class="page-header"><h1 class="page-title">${title}</h1><div class="header-actions"><button id="theme-toggle-btn" class="btn-icon" title="Cambia tema"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 01.818.162z"/></svg></button><button id="logout-btn" class="btn btn-secondary">Esci</button></div></header>`,
+            bottomNav: (currentHash) => `<nav class="bottom-nav"><a href="#dashboard" class="nav-item ${currentHash === '#dashboard' ? 'active' : ''}"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Home</span></a><a href="#profile" class="nav-item ${currentHash === '#profile' ? 'active' : ''}"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Profilo</span></a></nav>`,
             eyeIcon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>`,
             eyeSlashIcon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-4 .68l1.64 1.64C9.74 7.13 10.82 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L21.73 23 20.46 21.73 4.54 5.81 3.27 4.54 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>`,
             // CORREZIONE #2: Aggiornato il testo in "Scala"
@@ -652,6 +849,12 @@
                                 <button type="button" class="password-toggle-btn">${UIRenderers.eyeIcon}</button>
                             </div>
                         </div>
+                        <div class="form-group" style="display: flex; align-items: start; gap: 0.5rem;">
+                            <input type="checkbox" id="gdpr-consent" required style="margin-top: 0.25rem; width: 18px; height: 18px; cursor: pointer;">
+                            <label for="gdpr-consent" style="font-size: 0.85rem; color: var(--secondary-text); cursor: pointer; line-height: 1.4;">
+                                Accetto la <a href="#" id="privacy-policy-link" style="color: var(--accent-color); text-decoration: underline;">Privacy Policy</a> e autorizzo il trattamento dei miei dati personali ai sensi del GDPR
+                            </label>
+                        </div>
                     </div>
                     
                     <button type="submit" id="auth-submit" class="btn btn-primary w-full">${isRegistering ? 'Registrati' : 'Accedi'}</button>
@@ -665,13 +868,56 @@
 
         const renderDashboardPage = () => {
             const condos = state.condos;
+            const totalCondos = condos.length;
+
+            return `
+                ${UIRenderers.header('Dashboard')}
+                <main>
+                    <div style="text-align: center; margin: 2rem 0 3rem 0;">
+                        <div style="width: 120px; height: 120px; margin: 0 auto 1rem; background: linear-gradient(135deg, var(--accent-color), var(--accent-color-dark)); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <svg fill="white" viewBox="0 0 24 24" style="width: 64px; height: 64px;">
+                                <path d="M12 2L2 7v13h20V7L12 2zM8 18H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V8h2v2zm10 8h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8V8h8v2z"/>
+                            </svg>
+                        </div>
+                        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Gestione Condominii</h2>
+                        <p style="color: var(--secondary-text); font-size: 0.9rem;">${totalCondos} ${totalCondos === 1 ? 'condominio' : 'condominii'} in gestione</p>
+                    </div>
+
+                    <div class="dashboard-actions">
+                        <button id="add-condo-btn" class="action-box">
+                            <div class="action-icon" style="background: linear-gradient(135deg, #1DB954, #19a34a);">
+                                <svg fill="white" viewBox="0 0 24 24">
+                                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                                </svg>
+                            </div>
+                            <h3 class="action-title">Aggiungi</h3>
+                            <p class="action-description">Nuovo condominio</p>
+                        </button>
+
+                        <button id="directory-btn" class="action-box">
+                            <div class="action-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                                <svg fill="white" viewBox="0 0 24 24">
+                                    <path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 5h-3v5.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V7H9V5h9v2zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6z"/>
+                                </svg>
+                            </div>
+                            <h3 class="action-title">Rubrica</h3>
+                            <p class="action-description">Visualizza e filtra</p>
+                        </button>
+                    </div>
+                </main>
+                ${UIRenderers.bottomNav('#dashboard')}
+            `;
+        };
+
+        const renderDirectoryPage = () => {
+            const condos = state.condos;
             const filters = state.filters;
             const filteredCondos = condos.filter(condo => (condo.nome.toLowerCase().includes(filters.search) || condo.indirizzo.toLowerCase().includes(filters.search) || condo.comune.toLowerCase().includes(filters.search)) && (!filters.comune || condo.comune === filters.comune) && (!filters.scale || condo.scale.toString() === filters.scale));
             const uniqueComuni = [...new Set(condos.map(c => c.comune))];
             const uniqueScale = [...new Set(condos.map(c => c.scale))];
 
             return `
-                ${UIRenderers.header('Dashboard Amministratore')}
+                ${UIRenderers.header('Rubrica')}
                 <main>
                     <div class="card">
                         <div class="card-title">Filtra Condominii</div>
@@ -685,7 +931,6 @@
                                 <select id="comune-filter" class="form-select"><option value="">Tutti</option>${uniqueComuni.map(c => `<option value="${c}" ${filters.comune === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
                             </div>
                             <div class="form-group">
-                                <!-- CORREZIONE #2: Aggiornato il testo in "Numero Scala" -->
                                 <label for="scale-filter" class="form-label">Numero Scala</label>
                                 <select id="scale-filter" class="form-select"><option value="">Tutte</option>${uniqueScale.map(s => `<option value="${s}" ${filters.scale === s.toString() ? 'selected' : ''}>${s}</option>`).join('')}</select>
                             </div>
@@ -696,11 +941,12 @@
                         </div>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h2 class="section-title" style="margin: 0; font-size: 1.2rem; font-weight: 700;">Elenco Condominii(${filteredCondos.length})</h2>
-                        <button id="add-condo-btn" class="btn btn-primary">Aggiungi Condominio</button>
+                        <h2 class="section-title" style="margin: 0; font-size: 1.2rem; font-weight: 700;">Elenco Condominii (${filteredCondos.length})</h2>
+                        <button id="back-to-home-btn" class="btn btn-secondary">← Indietro</button>
                     </div>
                     <div id="condo-list" class="list-container">${filteredCondos.length > 0 ? filteredCondos.map(UIRenderers.condoListItem).join('') : UIRenderers.emptyState()}</div>
                 </main>
+                ${UIRenderers.bottomNav('#dashboard')}
             `;
         };
 
@@ -750,6 +996,102 @@
             `;
         };
 
+        const renderProfilePage = () => {
+            const userEmail = state.currentUser?.email || '';
+            const userInitial = userEmail.charAt(0).toUpperCase();
+            const totalCondos = state.condos.length;
+            const totalComuni = new Set(state.condos.map(c => c.comune)).size;
+
+            return `
+                ${UIRenderers.header('Profilo')}
+                <main>
+                    <div class="profile-card">
+                        <div class="profile-avatar">${userInitial}</div>
+                        <div class="profile-email">${userEmail}</div>
+                        <div class="profile-info">Amministratore</div>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value">${totalCondos}</div>
+                            <div class="stat-label">Condominii</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${totalComuni}</div>
+                            <div class="stat-label">Comuni</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Modifica Email</div>
+                        <div id="email-message-box" class="message-box"></div>
+                        <form id="change-email-form">
+                            <div class="form-group">
+                                <label for="new-email" class="form-label">Nuova Email</label>
+                                <input id="new-email" type="email" class="form-input" required value="${userEmail}">
+                            </div>
+                            <div class="form-group">
+                                <label for="email-password" class="form-label">Password Attuale (per conferma)</label>
+                                <div class="password-toggle-container">
+                                    <input id="email-password" type="password" class="form-input" required placeholder="••••••••">
+                                    <button type="button" class="password-toggle-btn">${UIRenderers.eyeIcon}</button>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-full">Aggiorna Email</button>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Modifica Password</div>
+                        <div id="password-message-box" class="message-box"></div>
+                        <form id="change-password-form">
+                            <div class="form-group">
+                                <label for="current-password" class="form-label">Password Attuale</label>
+                                <div class="password-toggle-container">
+                                    <input id="current-password" type="password" class="form-input" required placeholder="••••••••">
+                                    <button type="button" class="password-toggle-btn">${UIRenderers.eyeIcon}</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="new-password" class="form-label">Nuova Password</label>
+                                <div class="password-toggle-container">
+                                    <input id="new-password" type="password" class="form-input" required placeholder="••••••••" minlength="6">
+                                    <button type="button" class="password-toggle-btn">${UIRenderers.eyeIcon}</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="confirm-new-password" class="form-label">Conferma Nuova Password</label>
+                                <div class="password-toggle-container">
+                                    <input id="confirm-new-password" type="password" class="form-input" required placeholder="••••••••" minlength="6">
+                                    <button type="button" class="password-toggle-btn">${UIRenderers.eyeIcon}</button>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-full">Aggiorna Password</button>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Esporta Dati</div>
+                        <p style="color: var(--secondary-text); margin-bottom: 1rem; font-size: 0.9rem;">Scarica tutti i tuoi dati in formato JSON, inclusi i condominii e le informazioni dell'account.</p>
+                        <button id="download-data-btn" class="btn btn-secondary w-full" style="margin-bottom: 1rem;">
+                            <svg fill="currentColor" viewBox="0 0 24 24" style="width: 20px; height: 20px; margin-right: 0.5rem;">
+                                <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"/>
+                            </svg>
+                            Scarica Dati (JSON)
+                        </button>
+                        <button id="view-privacy-policy-btn" class="btn btn-secondary w-full" style="margin-bottom: 1rem;">
+                            <svg fill="currentColor" viewBox="0 0 24 24" style="width: 20px; height: 20px; margin-right: 0.5rem;">
+                                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                            </svg>
+                            Privacy Policy
+                        </button>
+                        <button id="logout-profile-btn" class="btn btn-danger w-full">Esci dall'Account</button>
+                    </div>
+                </main>
+                ${UIRenderers.bottomNav('#profile')}
+            `;
+        };
+
         /**
          * =================================================================
          * GESTORI DI EVENTI
@@ -796,15 +1138,41 @@
                     btn.innerHTML = isPassword ? UIRenderers.eyeSlashIcon : UIRenderers.eyeIcon;
                 });
             });
+
+            // Privacy policy link handler
+            const privacyLink = document.getElementById('privacy-policy-link');
+            if (privacyLink) {
+                privacyLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showPrivacyPolicyModal();
+                });
+            }
         };
 
         const setupDashboardHandlers = () => {
             document.getElementById('logout-btn').addEventListener('click', auth.logout);
             document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
-            document.getElementById('add-condo-btn').addEventListener('click', () => {
-                state.editingCondoId = null;
-                navigateTo('#condo-form');
-            });
+
+            const addBtn = document.getElementById('add-condo-btn');
+            if (addBtn) {
+                addBtn.addEventListener('click', () => {
+                    state.editingCondoId = null;
+                    navigateTo('#condo-form');
+                });
+            }
+
+            const directoryBtn = document.getElementById('directory-btn');
+            if (directoryBtn) {
+                directoryBtn.addEventListener('click', () => {
+                    navigateTo('#directory');
+                });
+            }
+        };
+
+        const setupDirectoryHandlers = () => {
+            document.getElementById('logout-btn').addEventListener('click', auth.logout);
+            document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
+
             // Gestione pulsante Cerca
             document.getElementById('search-btn').addEventListener('click', () => {
                 state.filters.search = document.getElementById('search-filter').value.toLowerCase();
@@ -830,6 +1198,12 @@
                     document.getElementById('search-btn').click();
                 }
             });
+
+            // Pulsante indietro
+            document.getElementById('back-to-home-btn').addEventListener('click', () => {
+                navigateTo('#dashboard');
+            });
+
             setupCondoListHandlers();
         };
 
@@ -865,6 +1239,132 @@
             });
         };
 
+        const setupProfileHandlers = () => {
+            document.getElementById('logout-profile-btn').addEventListener('click', auth.logout);
+            document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
+
+            // Password toggle functionality
+            document.querySelectorAll('.password-toggle-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const input = btn.previousElementSibling;
+                    const isPassword = input.type === 'password';
+                    input.type = isPassword ? 'text' : 'password';
+                    btn.innerHTML = isPassword ? UIRenderers.eyeSlashIcon : UIRenderers.eyeIcon;
+                });
+            });
+
+            // Email change handler
+            const emailForm = document.getElementById('change-email-form');
+            emailForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const newEmail = emailForm['new-email'].value;
+                const password = emailForm['email-password'].value;
+                const messageBox = document.getElementById('email-message-box');
+                const submitBtn = emailForm.querySelector('button[type="submit"]');
+
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Aggiornamento...';
+
+                try {
+                    await auth.updateEmail(newEmail, password);
+                    state.currentUser.email = newEmail;
+                    messageBox.className = 'message-box success';
+                    messageBox.textContent = 'Email aggiornata con successo!';
+                    messageBox.style.display = 'block';
+                    emailForm['email-password'].value = '';
+                    setTimeout(() => {
+                        messageBox.style.display = 'none';
+                    }, 5000);
+                } catch (error) {
+                    messageBox.className = 'message-box error';
+                    messageBox.textContent = getFirebaseErrorMessage(error);
+                    messageBox.style.display = 'block';
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Aggiorna Email';
+                }
+            });
+
+            // Password change handler
+            const passwordForm = document.getElementById('change-password-form');
+            passwordForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const currentPassword = passwordForm['current-password'].value;
+                const newPassword = passwordForm['new-password'].value;
+                const confirmPassword = passwordForm['confirm-new-password'].value;
+                const messageBox = document.getElementById('password-message-box');
+                const submitBtn = passwordForm.querySelector('button[type="submit"]');
+
+                if (newPassword !== confirmPassword) {
+                    messageBox.className = 'message-box error';
+                    messageBox.textContent = 'Le nuove password non coincidono.';
+                    messageBox.style.display = 'block';
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Aggiornamento...';
+
+                try {
+                    await auth.updatePassword(currentPassword, newPassword);
+                    messageBox.className = 'message-box success';
+                    messageBox.textContent = 'Password aggiornata con successo!';
+                    messageBox.style.display = 'block';
+                    passwordForm.reset();
+                    setTimeout(() => {
+                        messageBox.style.display = 'none';
+                    }, 5000);
+                } catch (error) {
+                    messageBox.className = 'message-box error';
+                    messageBox.textContent = getFirebaseErrorMessage(error);
+                    messageBox.style.display = 'block';
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Aggiorna Password';
+                }
+            });
+
+            // Download data handler
+            document.getElementById('download-data-btn').addEventListener('click', () => {
+                const userData = {
+                    account: {
+                        email: state.currentUser.email,
+                        uid: state.currentUser.uid,
+                        exportDate: new Date().toISOString()
+                    },
+                    condominii: state.condos.map(condo => ({
+                        id: condo.id,
+                        nome: condo.nome,
+                        comune: condo.comune,
+                        indirizzo: condo.indirizzo,
+                        scale: condo.scale,
+                        url: condo.url
+                    })),
+                    statistics: {
+                        totalCondominii: state.condos.length,
+                        totalComuni: new Set(state.condos.map(c => c.comune)).size,
+                        comuniList: [...new Set(state.condos.map(c => c.comune))]
+                    }
+                };
+
+                const dataStr = JSON.stringify(userData, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `dati-dashboard-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            });
+
+            // Privacy policy button handler
+            document.getElementById('view-privacy-policy-btn').addEventListener('click', () => {
+                showPrivacyPolicyModal();
+            });
+        };
+
         /**
          * =================================================================
          * FUNZIONI DI UTILITÀ
@@ -874,7 +1374,95 @@
         const showModal = (title, body) => { document.getElementById('modal-title').textContent = title; document.getElementById('modal-body').innerHTML = body; document.getElementById('modal-container').classList.add('visible'); };
         const hideModal = () => { document.getElementById('modal-container').classList.remove('visible'); };
         const showResetPasswordModal = () => { showModal('Recupera Password', `<div id="reset-message-box" class="message-box"></div><p style="color: var(--secondary-text); margin-bottom: 1rem;">Inserisci l'email associata al tuo account. Ti invieremo un link per reimpostare la password.</p><form id="reset-password-form"><div class="form-group"><label for="reset-email" class="form-label">Email</label><input id="reset-email" type="email" class="form-input" required></div><div class="flex justify-end"><button type="submit" class="btn btn-primary">Invia Email</button></div></form>`); document.getElementById('reset-password-form').addEventListener('submit', async (e) => { e.preventDefault(); const form = e.target; const email = form['reset-email'].value; const messageBox = document.getElementById('reset-message-box'); const submitBtn = form.querySelector('button[type="submit"]'); submitBtn.disabled = true; submitBtn.textContent = 'Invio...'; try { await auth.resetPassword(email); messageBox.className = 'message-box success'; messageBox.textContent = 'Email di recupero inviata! Controlla la tua casella di posta.'; messageBox.style.display = 'block'; setTimeout(hideModal, 3000); } catch (error) { messageBox.className = 'message-box error'; messageBox.textContent = getFirebaseErrorMessage(error); messageBox.style.display = 'block'; } finally { submitBtn.disabled = false; submitBtn.textContent = 'Invia Email'; } }); };
-        const getFirebaseErrorMessage = (error) => { switch (error.code) { case 'auth/invalid-email': return 'Formato email non valido.'; case 'auth/user-not-found': return 'Nessun utente trovato con questa email.'; case 'auth/wrong-password': return 'Password errata.'; case 'auth/email-already-in-use': return 'Questa email è già stata registrata.'; case 'auth/weak-password': return 'La password deve essere di almeno 6 caratteri.'; default: return 'Si è verificato un errore. Riprova.'; } };
+        const showPrivacyPolicyModal = () => {
+            showModal('Privacy Policy - GDPR', `
+            <div style="max-height: 60vh; overflow-y: auto; padding-right: 0.5rem;">
+                <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary-text);">Informativa sulla Privacy</h3>
+                
+                <p style="color: var(--secondary-text); margin-bottom: 1.5rem; font-size: 0.9rem;">
+                    Ai sensi del Regolamento UE 2016/679 (GDPR), la presente informativa descrive le modalità di trattamento dei dati personali degli utenti.
+                </p>
+
+                <h4 style="font-size: 1rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--accent-color);">1. Titolari del Trattamento</h4>
+                <p style="color: var(--secondary-text); margin-bottom: 1rem; font-size: 0.9rem;">
+                    I Titolari del trattamento dei dati sono:<br>
+                    • <strong>Riccardo Giorgio Ponte</strong><br>
+                    • <strong>Alberto Giorgio Ponte</strong>
+                </p>
+
+                <h4 style="font-size: 1rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--accent-color);">2. Dati Raccolti</h4>
+                <p style="color: var(--secondary-text); margin-bottom: 0.5rem; font-size: 0.9rem;">Raccogliamo e trattiamo i seguenti dati personali:</p>
+                <ul style="color: var(--secondary-text); margin-bottom: 1rem; font-size: 0.9rem; padding-left: 1.5rem;">
+                    <li><strong>Dati di autenticazione:</strong> indirizzo email, password (criptata)</li>
+                    <li><strong>Dati dei condominii:</strong> nome condominio, indirizzo, comune, numero scale, URL gestionale</li>
+                    <li><strong>Dati tecnici:</strong> ID utente univoco (UID), timestamp di creazione account</li>
+                </ul>
+
+                <h4 style="font-size: 1rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--accent-color);">3. Finalità del Trattamento</h4>
+                <p style="color: var(--secondary-text); margin-bottom: 0.5rem; font-size: 0.9rem;">I dati vengono trattati per le seguenti finalità:</p>
+                <ul style="color: var(--secondary-text); margin-bottom: 1rem; font-size: 0.9rem; padding-left: 1.5rem;">
+                    <li>Gestione dell'account utente e autenticazione</li>
+                    <li>Archiviazione e gestione delle informazioni sui condominii</li>
+                    <li>Fornitura dei servizi della piattaforma di gestione condominiale</li>
+                    <li>Comunicazioni relative al servizio</li>
+                </ul>
+
+                <h4 style="font-size: 1rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--accent-color);">4. Base Giuridica</h4>
+                <p style="color: var(--secondary-text); margin-bottom: 1rem; font-size: 0.9rem;">
+                    Il trattamento dei dati si basa sul <strong>consenso esplicito</strong> dell'utente (Art. 6, par. 1, lett. a GDPR) e sull'<strong>esecuzione del contratto</strong> di servizio (Art. 6, par. 1, lett. b GDPR).
+                </p>
+
+                <h4 style="font-size: 1rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--accent-color);">5. Conservazione dei Dati</h4>
+                <p style="color: var(--secondary-text); margin-bottom: 1rem; font-size: 0.9rem;">
+                    I dati personali saranno conservati per il tempo necessario alla fornitura del servizio e fino alla cancellazione dell'account da parte dell'utente. In caso di cancellazione, i dati verranno eliminati entro 30 giorni.
+                </p>
+
+                <h4 style="font-size: 1rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--accent-color);">6. Comunicazione e Diffusione</h4>
+                <p style="color: var(--secondary-text); margin-bottom: 1rem; font-size: 0.9rem;">
+                    I dati personali non vengono comunicati a terzi né diffusi, ad eccezione dei fornitori di servizi tecnici (Firebase/Google Cloud) necessari per il funzionamento della piattaforma, che agiscono come responsabili del trattamento.
+                </p>
+
+                <h4 style="font-size: 1rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--accent-color);">7. Diritti dell'Interessato</h4>
+                <p style="color: var(--secondary-text); margin-bottom: 0.5rem; font-size: 0.9rem;">Ai sensi degli articoli 15-22 del GDPR, l'utente ha diritto di:</p>
+                <ul style="color: var(--secondary-text); margin-bottom: 1rem; font-size: 0.9rem; padding-left: 1.5rem;">
+                    <li><strong>Accesso:</strong> ottenere conferma dell'esistenza dei propri dati e riceverne copia</li>
+                    <li><strong>Rettifica:</strong> correggere dati inesatti o incompleti</li>
+                    <li><strong>Cancellazione:</strong> richiedere la cancellazione dei propri dati</li>
+                    <li><strong>Limitazione:</strong> limitare il trattamento dei dati</li>
+                    <li><strong>Portabilità:</strong> ricevere i dati in formato strutturato (JSON)</li>
+                    <li><strong>Opposizione:</strong> opporsi al trattamento dei dati</li>
+                    <li><strong>Revoca consenso:</strong> revocare il consenso in qualsiasi momento</li>
+                </ul>
+
+                <h4 style="font-size: 1rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--accent-color);">8. Sicurezza dei Dati</h4>
+                <p style="color: var(--secondary-text); margin-bottom: 1rem; font-size: 0.9rem;">
+                    I dati sono protetti mediante misure di sicurezza tecniche e organizzative adeguate, inclusa la crittografia delle password e l'utilizzo di protocolli di sicurezza HTTPS. I dati sono archiviati su server Firebase con certificazione di conformità GDPR.
+                </p>
+
+                <h4 style="font-size: 1rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--accent-color);">9. Esercizio dei Diritti</h4>
+                <p style="color: var(--secondary-text); margin-bottom: 1rem; font-size: 0.9rem;">
+                    Per esercitare i propri diritti, l'utente può:<br>
+                    • Modificare email e password dalla sezione Profilo<br>
+                    • Scaricare i propri dati in formato JSON dalla sezione Profilo<br>
+                    • Cancellare il proprio account (comporta la cancellazione di tutti i dati)<br>
+                    • Contattare i titolari via email: <a href="mailto:conbridgesw@gmail.com" style="color: var(--accent-color); text-decoration: underline;">conbridgesw@gmail.com</a>
+                </p>
+
+                <h4 style="font-size: 1rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--accent-color);">10. Reclami</h4>
+                <p style="color: var(--secondary-text); margin-bottom: 1rem; font-size: 0.9rem;">
+                    L'utente ha il diritto di proporre reclamo all'Autorità Garante per la Protezione dei Dati Personali (www.garanteprivacy.it) in caso di violazione della normativa sulla protezione dei dati.
+                </p>
+
+                <p style="color: var(--secondary-text); margin-top: 2rem; font-size: 0.85rem; font-style: italic;">
+                    Ultimo aggiornamento: ${new Date().toLocaleDateString('it-IT')}
+                </p>
+            </div>
+            <div style="margin-top: 1.5rem; text-align: center;">
+                <button onclick="hideModal()" class="btn btn-primary">Ho Capito</button>
+            </div>
+        `);
+        };
+        const getFirebaseErrorMessage = (error) => { switch (error.code) { case 'auth/invalid-email': return 'Formato email non valido.'; case 'auth/user-not-found': return 'Nessun utente trovato con questa email.'; case 'auth/wrong-password': return 'Password errata.'; case 'auth/email-already-in-use': return 'Questa email è già stata registrata.'; case 'auth/weak-password': return 'La password deve essere di almeno 6 caratteri.'; case 'auth/requires-recent-login': return 'Per motivi di sicurezza, devi effettuare nuovamente il login.'; case 'auth/invalid-credential': return 'Credenziali non valide. Verifica la password.'; default: return 'Si è verificato un errore. Riprova.'; } };
         const toggleTheme = () => { const html = document.documentElement; const currentTheme = html.getAttribute('data-theme'); const newTheme = currentTheme === 'dark' ? 'light' : 'dark'; html.setAttribute('data-theme', newTheme); localStorage.setItem('theme-preference', newTheme); };
         const initializeTheme = () => { const savedTheme = localStorage.getItem('theme-preference') || 'dark'; document.documentElement.setAttribute('data-theme', savedTheme); };
         const updateCondoList = () => {
@@ -888,7 +1476,7 @@
                 setupCondoListHandlers();
             }
             if (countElement) {
-                countElement.textContent = `Elenco Condominii(${filteredCondos.length})`;
+                countElement.textContent = `Elenco(${filteredCondos.length})`;
             }
         };
         const setupCondoListHandlers = () => {
@@ -923,7 +1511,7 @@
          * RENDERER PRINCIPALE DELL'APP
          * =================================================================
          */
-        const renderApp = (hash) => { const appContainer = document.getElementById('app'); if (!appContainer) return; switch (hash) { case '#login': appContainer.innerHTML = renderLoginPage(false); setupLoginHandlers(); break; case '#register': appContainer.innerHTML = renderLoginPage(true); setupLoginHandlers(); break; case '#dashboard': appContainer.innerHTML = renderDashboardPage(); setupDashboardHandlers(); break; case '#condo-form': appContainer.innerHTML = renderCondoFormPage(); setupCondoFormHandlers(); break; default: navigateTo('#login'); } };
+        const renderApp = (hash) => { const appContainer = document.getElementById('app'); if (!appContainer) return; switch (hash) { case '#login': appContainer.innerHTML = renderLoginPage(false); setupLoginHandlers(); break; case '#register': appContainer.innerHTML = renderLoginPage(true); setupLoginHandlers(); break; case '#dashboard': appContainer.innerHTML = renderDashboardPage(); setupDashboardHandlers(); break; case '#directory': appContainer.innerHTML = renderDirectoryPage(); setupDirectoryHandlers(); break; case '#profile': appContainer.innerHTML = renderProfilePage(); setupProfileHandlers(); break; case '#condo-form': appContainer.innerHTML = renderCondoFormPage(); setupCondoFormHandlers(); break; default: navigateTo('#login'); } };
         window.hideModal = hideModal;
     </script>
 </body>
