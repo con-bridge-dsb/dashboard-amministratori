@@ -1100,11 +1100,29 @@
 
         const setupLoginHandlers = () => {
             const form = document.getElementById('auth-form');
+            const registerFields = document.getElementById('register-fields');
+            const gdprCheckbox = document.getElementById('gdpr-consent');
+
+            // Function to update GDPR checkbox required state
+            const updateGdprRequired = () => {
+                const isRegistering = registerFields && registerFields.offsetParent !== null;
+                if (gdprCheckbox) {
+                    if (isRegistering) {
+                        gdprCheckbox.setAttribute('required', 'required');
+                    } else {
+                        gdprCheckbox.removeAttribute('required');
+                    }
+                }
+            };
+
+            // Initial update
+            updateGdprRequired();
+
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const submitBtn = form.querySelector('button[type="submit"]');
                 submitBtn.disabled = true;
-                const isRegistering = !!document.getElementById('register-fields').offsetParent;
+                const isRegistering = !!registerFields.offsetParent;
                 const email = form.email.value;
                 const password = form.password.value;
                 try {
@@ -1123,13 +1141,22 @@
                     submitBtn.disabled = false;
                 }
             });
-            document.getElementById('toggle-auth').addEventListener('click', () => {
-                const isRegistering = !!document.getElementById('register-fields').offsetParent;
-                navigateTo(isRegistering ? '#login' : '#register');
-            });
-            document.getElementById('forgot-password').addEventListener('click', () => {
-                showResetPasswordModal();
-            });
+
+            const toggleAuthBtn = document.getElementById('toggle-auth');
+            if (toggleAuthBtn) {
+                toggleAuthBtn.addEventListener('click', () => {
+                    const isRegistering = !!document.getElementById('register-fields').offsetParent;
+                    navigateTo(isRegistering ? '#login' : '#register');
+                });
+            }
+
+            const forgotPasswordBtn = document.getElementById('forgot-password');
+            if (forgotPasswordBtn) {
+                forgotPasswordBtn.addEventListener('click', () => {
+                    showResetPasswordModal();
+                });
+            }
+
             document.querySelectorAll('.password-toggle-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const input = btn.previousElementSibling;
