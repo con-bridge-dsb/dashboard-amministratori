@@ -671,10 +671,10 @@
             const uniqueScale = [...new Set(condos.map(c => c.scale))];
 
             return `
-                ${UIRenderers.header('Dashboard Condomini')}
+                ${UIRenderers.header('Dashboard Amministratore')}
                 <main>
                     <div class="card">
-                        <div class="card-title">Filtra Condomini</div>
+                        <div class="card-title">Filtra Condominii</div>
                         <div class="grid grid-cols-3 gap-4" id="filters-container">
                             <div class="form-group">
                                 <label for="search-filter" class="form-label">Cerca</label>
@@ -696,7 +696,7 @@
                         </div>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h2 class="section-title" style="margin: 0; font-size: 1.2rem; font-weight: 700;">Elenco Condomini (${filteredCondos.length})</h2>
+                        <h2 class="section-title" style="margin: 0; font-size: 1.2rem; font-weight: 700;">Elenco Condominii(${filteredCondos.length})</h2>
                         <button id="add-condo-btn" class="btn btn-primary">Aggiungi Condominio</button>
                     </div>
                     <div id="condo-list" class="list-container">${filteredCondos.length > 0 ? filteredCondos.map(UIRenderers.condoListItem).join('') : UIRenderers.emptyState()}</div>
@@ -888,7 +888,7 @@
                 setupCondoListHandlers();
             }
             if (countElement) {
-                countElement.textContent = `Elenco Condomini (${filteredCondos.length})`;
+                countElement.textContent = `Elenco Condominii(${filteredCondos.length})`;
             }
         };
         const setupCondoListHandlers = () => {
