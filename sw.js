@@ -1,10 +1,11 @@
-const CACHE_NAME = 'dashboard-cb-v4'; // Versione aggiornata
+const CACHE_NAME = 'dashboard-cb-v5'; // Versione aggiornata
 
 const URLS_TO_CACHE = [
   '/dashboard-amministratori/',
   '/dashboard-amministratori/index.html',
   '/dashboard-amministratori/manifest.json',
-  '/dashboard-amministratori/icons/icon-512.png',
+  '/dashboard-amministratori/icons/icon-192x192.png',
+  '/dashboard-amministratori/icons/icon-512x512.png',
   'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap'
 ];
 
