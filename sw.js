@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dashboard-amministratori-v2'; // Cambiato nome per forzare aggiornamento
+const CACHE_NAME = 'dashboard-amministratori-v2'; // Cambiato il nome per forzare aggiornamento
 
 const URLS_TO_CACHE = [
   '/dashboard-amministratori/',
