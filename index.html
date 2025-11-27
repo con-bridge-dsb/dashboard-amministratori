@@ -826,11 +826,13 @@
         window.addEventListener('DOMContentLoaded', () => {
             initializeApp();
 
-            // Registrazione PWA Service Worker
+            // Registrazione PWA Service Worker (Percorso Assoluto per GitHub Pages)
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('Service Worker registrato:', reg))
-                    .catch(err => console.log('Errore Service Worker:', err));
+                navigator.serviceWorker.register('/dashboard-amministratori/sw.js', {
+                    scope: '/dashboard-amministratori/'
+                })
+                .then(reg => console.log('SW registrato con scope:', reg.scope))
+                .catch(err => console.log('SW fallito:', err));
             }
         });
 
