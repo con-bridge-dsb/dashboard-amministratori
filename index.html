@@ -778,6 +778,23 @@
                 await auth.reauthenticate(currentPassword);
                 const user = firebaseAuth.currentUser;
                 await user.updatePassword(newPassword);
+            },
+            deleteAccount: async (password) => {
+                await auth.reauthenticate(password);
+                const user = firebaseAuth.currentUser;
+                const userId = user.uid;
+
+                // Delete all user's condos from Firestore
+                const condos = await db.getCondos(userId);
+                for (const condo of condos) {
+                    await db.deleteCondo(condo.id);
+                }
+
+                // Delete user profile from Firestore
+                await firebaseDb.collection('users').doc(userId).delete();
+
+                // Delete Firebase Auth account
+                await user.delete();
             }
         };
 
@@ -879,7 +896,7 @@
                                 <path d="M12 2L2 7v13h20V7L12 2zM8 18H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V8h2v2zm10 8h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8V8h8v2z"/>
                             </svg>
                         </div>
-                        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Gestione Condominii</h2>
+                        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Con-bridge</h2>
                         <p style="color: var(--secondary-text); font-size: 0.9rem;">${totalCondos} ${totalCondos === 1 ? 'condominio' : 'condominii'} in gestione</p>
                     </div>
 
@@ -941,7 +958,7 @@
                         </div>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h2 class="section-title" style="margin: 0; font-size: 1.2rem; font-weight: 700;">Elenco Condominii (${filteredCondos.length})</h2>
+                        <h2 class="section-title" style="margin: 0; font-size: 1.2rem; font-weight: 700;">Elenco (${filteredCondos.length})</h2>
                         <button id="back-to-home-btn" class="btn btn-secondary">← Indietro</button>
                     </div>
                     <div id="condo-list" class="list-container">${filteredCondos.length > 0 ? filteredCondos.map(UIRenderers.condoListItem).join('') : UIRenderers.emptyState()}</div>
@@ -958,7 +975,7 @@
                 ${UIRenderers.header(isEditing ? 'Modifica Condominio' : 'Nuovo Condominio')}
                 <main>
                     <div class="card">
-                        <div class="card-title">${isEditing ? `Modifica: ${condo.nome}` : 'Dettagli Nuovo Condominio'}</div>
+                        <div class="card-title">${isEditing ? `Modifica: ${condo.nome}` : 'Dettagli'}</div>
                         <div id="message-box" class="message-box"></div>
                         <form id="condo-form">
                             <input type="hidden" id="condo-id" value="${condo?.id || ''}">
@@ -982,11 +999,11 @@
                                 <input id="condo-scale" type="number" class="form-input" required min="1" value="${condo?.scale || '1'}">
                             </div>
                              <div class="form-group">
-                                <label for="condo-url" class="form-label">URL gestionale (es. MIO CONDOMINIO)</label>
+                                <label for="condo-url" class="form-label">URL gestionale</label>
                                 <input id="condo-url" type="url" class="form-input" required placeholder="https://" value="${condo?.url || ''}">
                                 <div class="validation-message">Inserisci un URL valido.</div>
                             </div>
-                            <div class="flex justify-end gap-4" style="margin-top: 2rem;">
+                            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
                                 <button type="button" id="cancel-btn" class="btn btn-secondary">Annulla</button>
                                 <button type="submit" class="btn btn-primary">${isEditing ? 'Salva Modifiche' : 'Crea Condominio'}</button>
                             </div>
@@ -1085,7 +1102,7 @@
                             </svg>
                             Privacy Policy
                         </button>
-                        <button id="logout-profile-btn" class="btn btn-danger w-full">Esci dall'Account</button>
+                        <button id="delete-account-btn" class="btn btn-danger w-full">Elimina Account</button>
                     </div>
                 </main>
                 ${UIRenderers.bottomNav('#profile')}
@@ -1267,7 +1284,9 @@
         };
 
         const setupProfileHandlers = () => {
-            document.getElementById('logout-profile-btn').addEventListener('click', auth.logout);
+            document.getElementById('delete-account-btn').addEventListener('click', () => {
+                showDeleteAccountModal();
+            });
             document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
 
             // Password toggle functionality
@@ -1401,6 +1420,79 @@
         const showModal = (title, body) => { document.getElementById('modal-title').textContent = title; document.getElementById('modal-body').innerHTML = body; document.getElementById('modal-container').classList.add('visible'); };
         const hideModal = () => { document.getElementById('modal-container').classList.remove('visible'); };
         const showResetPasswordModal = () => { showModal('Recupera Password', `<div id="reset-message-box" class="message-box"></div><p style="color: var(--secondary-text); margin-bottom: 1rem;">Inserisci l'email associata al tuo account. Ti invieremo un link per reimpostare la password.</p><form id="reset-password-form"><div class="form-group"><label for="reset-email" class="form-label">Email</label><input id="reset-email" type="email" class="form-input" required></div><div class="flex justify-end"><button type="submit" class="btn btn-primary">Invia Email</button></div></form>`); document.getElementById('reset-password-form').addEventListener('submit', async (e) => { e.preventDefault(); const form = e.target; const email = form['reset-email'].value; const messageBox = document.getElementById('reset-message-box'); const submitBtn = form.querySelector('button[type="submit"]'); submitBtn.disabled = true; submitBtn.textContent = 'Invio...'; try { await auth.resetPassword(email); messageBox.className = 'message-box success'; messageBox.textContent = 'Email di recupero inviata! Controlla la tua casella di posta.'; messageBox.style.display = 'block'; setTimeout(hideModal, 3000); } catch (error) { messageBox.className = 'message-box error'; messageBox.textContent = getFirebaseErrorMessage(error); messageBox.style.display = 'block'; } finally { submitBtn.disabled = false; submitBtn.textContent = 'Invia Email'; } }); };
+        const showDeleteAccountModal = () => {
+            showModal('Elimina Account', `
+                <div id="delete-account-message-box" class="message-box"></div>
+                <p style="color: var(--secondary-text); margin-bottom: 1rem; font-size: 0.9rem;">
+                    <strong style="color: var(--danger);">⚠️ ATTENZIONE:</strong> Questa azione è irreversibile!
+                </p>
+                <p style="color: var(--secondary-text); margin-bottom: 1rem; font-size: 0.9rem;">
+                    Eliminando il tuo account verranno cancellati permanentemente:
+                </p>
+                <ul style="color: var(--secondary-text); margin-bottom: 1.5rem; font-size: 0.9rem; padding-left: 1.5rem;">
+                    <li>Il tuo profilo utente</li>
+                    <li>Tutti i condominii che hai creato</li>
+                    <li>Tutti i dati associati al tuo account</li>
+                </ul>
+                <p style="color: var(--secondary-text); margin-bottom: 1rem; font-size: 0.9rem;">
+                    Per confermare l'eliminazione, inserisci la tua password:
+                </p>
+                <form id="delete-account-form">
+                    <div class="form-group">
+                        <label for="delete-account-password" class="form-label">Password</label>
+                        <div class="password-toggle-container">
+                            <input id="delete-account-password" type="password" class="form-input" required placeholder="••••••••">
+                            <button type="button" class="password-toggle-btn">${UIRenderers.eyeIcon}</button>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+                        <button type="button" id="cancel-delete-btn" class="btn btn-secondary">Annulla</button>
+                        <button type="submit" class="btn btn-danger">Elimina</button>
+                    </div>
+                </form>
+            `);
+
+            // Password toggle for delete modal
+            document.querySelectorAll('#delete-account-form .password-toggle-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const input = btn.previousElementSibling;
+                    const isPassword = input.type === 'password';
+                    input.type = isPassword ? 'text' : 'password';
+                    btn.innerHTML = isPassword ? UIRenderers.eyeSlashIcon : UIRenderers.eyeIcon;
+                });
+            });
+
+            document.getElementById('cancel-delete-btn').addEventListener('click', hideModal);
+
+            document.getElementById('delete-account-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const password = form['delete-account-password'].value;
+                const messageBox = document.getElementById('delete-account-message-box');
+                const submitBtn = form.querySelector('button[type="submit"]');
+
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Eliminazione in corso...';
+
+                try {
+                    await auth.deleteAccount(password);
+                    messageBox.className = 'message-box success';
+                    messageBox.textContent = 'Account eliminato con successo. Arrivederci!';
+                    messageBox.style.display = 'block';
+                    setTimeout(() => {
+                        hideModal();
+                        // User will be automatically logged out and redirected by onAuthStateChanged
+                    }, 2000);
+                } catch (error) {
+                    messageBox.className = 'message-box error';
+                    messageBox.textContent = getFirebaseErrorMessage(error);
+                    messageBox.style.display = 'block';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Elimina';
+                }
+            });
+        };
+
         const showPrivacyPolicyModal = () => {
             showModal('Privacy Policy - GDPR', `
             <div style="max-height: 60vh; overflow-y: auto; padding-right: 0.5rem;">
