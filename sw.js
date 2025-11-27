@@ -1,20 +1,17 @@
-const CACHE_NAME = 'dashboard-amministratori-v2'; // Cambiato il nome per forzare aggiornamento
+const CACHE_NAME = 'dashboard-cb-v4'; // Versione aggiornata
 
 const URLS_TO_CACHE = [
   '/dashboard-amministratori/',
   '/dashboard-amministratori/index.html',
   '/dashboard-amministratori/manifest.json',
-  'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap',
-  'https://i.postimg.cc/NffSsHhH/icon-512x512.jpg'
+  '/dashboard-amministratori/icons/icon-512.png',
+  'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap'
 ];
 
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Cache aperta');
-        return cache.addAll(URLS_TO_CACHE);
-      })
+      .then(cache => cache.addAll(URLS_TO_CACHE))
   );
 });
 
@@ -27,14 +24,12 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Attiva immediatamente il nuovo SW
 self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
+          if (cacheName !== CACHE_NAME) {
             return caches.delete(cacheName);
           }
         })
