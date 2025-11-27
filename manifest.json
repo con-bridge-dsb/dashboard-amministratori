@@ -1,7 +1,8 @@
 {
   "name": "DASHBOARD CB",
   "short_name": "DASHBOARD CB",
-  "start_url": "./index.html",
+  "start_url": "/dashboard-amministratori/",
+  "scope": "/dashboard-amministratori/",
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#121212",
