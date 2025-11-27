@@ -6,7 +6,7 @@ const urlsToCache = [
   'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap'
 ];
 
-// Installazione del Service Worker
+// Installazione del nostro Service Worker
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
