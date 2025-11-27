@@ -829,7 +829,7 @@
             eyeSlashIcon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-4 .68l1.64 1.64C9.74 7.13 10.82 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L21.73 23 20.46 21.73 4.54 5.81 3.27 4.54 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>`,
             // CORREZIONE #2: Aggiornato il testo in "Scala"
             condoListItem: (condo) => `<div class="list-item" data-id="${condo.id}"><div class="list-item-icon"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7v13h20V7L12 2z"/></svg></div><div class="list-item-content"><div class="title">${condo.nome}</div><div class="subtitle">${condo.indirizzo}, ${condo.comune} - Scala: ${condo.scale}</div></div><div class="list-item-actions"><a href="${condo.url}" target="_blank" class="btn-icon" title="Apri link"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg></a><button class="btn-icon btn-edit" title="Modifica"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button><button class="btn-icon btn-delete" title="Elimina" style="background-color: var(--danger); color: white;"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button></div></div>`,
-            emptyState: () => `<div class="card" style="text-align: center; padding: 3rem 1.5rem;"><svg fill="currentColor" viewBox="0 0 24 24" style="width: 64px; height: 64px; color: var(--secondary-text); margin: 0 auto 1rem;"><path d="M12 2L2 7v13h20V7L12 2zM8 18H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V8h2v2zm10 8h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8V8h8v2z"/></svg><p style="color: var(--secondary-text);">Nessun condominio trovato. Inizia aggiungendone uno nuovo.</p></div>`
+            emptyState: () => `<div class="card" style="text-align: center; padding: 3rem 1.5rem;"><svg fill="currentColor" viewBox="0 0 24 24" style="width: 64px; height: 64px; color: var(--secondary-text); margin: 0 auto 1rem;"><path d="M12 2L2 7v13h20V7L12 2zM8 18H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V8h2v2zm10 8h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8V8h8v2z"/></svg><p style="color: var(--secondary-text);">Nessun condominio trovato</p></div>`
         };
 
         /**
@@ -916,7 +916,7 @@
                                 </svg>
                             </div>
                             <h3 class="action-title">Rubrica</h3>
-                            <p class="action-description">Visualizza e filtra</p>
+                            <p class="action-description">Seleziona condominio</p>
                         </button>
                     </div>
                 </main>
@@ -935,7 +935,7 @@
                 ${UIRenderers.header('Rubrica')}
                 <main>
                     <div class="card">
-                        <div class="card-title">Filtra Condominii</div>
+                        <div class="card-title">Filtra</div>
                         <div class="grid grid-cols-3 gap-4" id="filters-container">
                             <div class="form-group">
                                 <label for="search-filter" class="form-label">Cerca</label>
@@ -946,7 +946,7 @@
                                 <select id="comune-filter" class="form-select"><option value="">Tutti</option>${uniqueComuni.map(c => `<option value="${c}" ${filters.comune === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
                             </div>
                             <div class="form-group">
-                                <label for="scale-filter" class="form-label">Numero Scala</label>
+                                <label for="scale-filter" class="form-label">Scala</label>
                                 <select id="scale-filter" class="form-select"><option value="">Tutte</option>${uniqueScale.map(s => `<option value="${s}" ${filters.scale === s.toString() ? 'selected' : ''}>${s}</option>`).join('')}</select>
                             </div>
                         </div>
@@ -978,7 +978,7 @@
                         <form id="condo-form">
                             <input type="hidden" id="condo-id" value="${condo?.id || ''}">
                             <div class="form-group">
-                                <label for="condo-nome" class="form-label">Nome Condominio</label>
+                                <label for="condo-nome" class="form-label">Nome</label>
                                 <input id="condo-nome" type="text" class="form-input" required value="${condo?.nome || ''}">
                             </div>
                              <div class="grid grid-cols-2 gap-4">
@@ -992,9 +992,9 @@
                                 </div>
                             </div>
                              <div class="form-group">
-                                <!-- CORREZIONE #2: Aggiornato il testo in "Numero Scala" -->
-                                <label for="condo-scale" class="form-label">Numero Scala</label>
-                                <input id="condo-scale" type="number" class="form-input" required min="1" value="${condo?.scale || '1'}">
+                                <!-- CORREZIONE #2: Aggiornato il testo in "Scala" -->
+                                <label for="condo-scale" class="form-label">Scala</label>
+                                <input id="condo-scale" type="text" class="form-input" required value="${condo?.scale || ''}">
                             </div>
                              <div class="form-group">
                                 <label for="condo-url" class="form-label">URL gestionale</label>
@@ -1087,7 +1087,7 @@
 
                     <div class="card">
                         <div class="card-title">Esporta Dati</div>
-                        <p style="color: var(--secondary-text); margin-bottom: 1rem; font-size: 0.9rem;">Scarica tutti i tuoi dati in formato JSON, inclusi i condominii e le informazioni dell'account.</p>
+                        <p style="color: var(--secondary-text); margin-bottom: 1rem; font-size: 0.9rem;">Scarica i tuoi dati</p>
                         <button id="download-data-btn" class="btn btn-secondary w-full" style="margin-bottom: 1rem;">
                             <svg fill="currentColor" viewBox="0 0 24 24" style="width: 20px; height: 20px; margin-right: 0.5rem;">
                                 <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"/>
@@ -1260,7 +1260,7 @@
                     nome: form['condo-nome'].value,
                     comune: form['condo-comune'].value,
                     indirizzo: form['condo-indirizzo'].value,
-                    scale: parseInt(form['condo-scale'].value, 10),
+                    scale: form['condo-scale'].value,
                     url: form['condo-url'].value,
                 };
                 const condoId = form['condo-id'].value;
@@ -1511,7 +1511,7 @@
                 <p style="color: var(--secondary-text); margin-bottom: 0.5rem; font-size: 0.9rem;">Raccogliamo e trattiamo i seguenti dati personali:</p>
                 <ul style="color: var(--secondary-text); margin-bottom: 1rem; font-size: 0.9rem; padding-left: 1.5rem;">
                     <li><strong>Dati di autenticazione:</strong> indirizzo email, password (criptata)</li>
-                    <li><strong>Dati dei condominii:</strong> nome condominio, indirizzo, comune, numero scale, URL gestionale</li>
+                    <li><strong>Dati dei condominii:</strong> Nome, indirizzo, comune, numero scale, URL gestionale</li>
                     <li><strong>Dati tecnici:</strong> ID utente univoco (UID), timestamp di creazione account</li>
                 </ul>
 
