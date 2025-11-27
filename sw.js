@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dashboard-cb-v5'; // Versione aggiornata
+const CACHE_NAME = 'dashboard-cb-v5'; // Version aggiornata
 
 const URLS_TO_CACHE = [
   '/dashboard-amministratori/',
